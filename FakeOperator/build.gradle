@@ -16,12 +16,28 @@ repositories {
 dependencies {
 //    compile 'com.android.support:support-v4:13.0.+'
     compile fileTree(dir: 'libs', includes: [ '*.jar' ])
+
+}
+
+
+//tasks.withType(Compiler) { compile ->
+//    compile.options.compilerArgs << '-javaagent:build-tools/aspectjweaver.jar'
+//    compile.options.compilerArgs << '-cp build-tools/substrate-bless.jar'
+//}
+
+// Does this work?
+android.applicationVariants.each { variant ->
+    variant.javaCompile.options.compilerArgs << '-javaagent:build-tools/aspectjweaver.jar'
+    variant.javaCompile.options.compilerArgs << '-cp build-tools/substrate-bless.jar'
 }
 
 android {
     compileSdkVersion 17
     buildToolsVersion "17.0.0"
 
+    buildTypes {
+
+    }
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 16

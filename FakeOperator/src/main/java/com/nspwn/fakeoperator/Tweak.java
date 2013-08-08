@@ -18,8 +18,8 @@ public class Tweak {
         Log.i(TAG, "waiting for class load(s)...");
 
         hookNetworkController();
-        hookServiceState();
-        hookTelephonyManager();
+//        hookServiceState();
+//        hookTelephonyManager();
     }
 
     private static void hookNetworkController() {
@@ -27,7 +27,7 @@ public class Tweak {
             public void classLoaded(Class<?> resources) {
                 try {
                     Log.d(TAG, "hooking updateNetworkName");
-                    Method updateNetworkName = resources.getMethod("updateNetworkName", boolean.class, String.class, boolean.class, String.class);
+                    Method updateNetworkName = resources.getDeclaredMethod("updateNetworkName", boolean.class, String.class, boolean.class, String.class);
 
                     if (updateNetworkName != null) {
                         Log.d(TAG, "hooking updateNetworkName");
