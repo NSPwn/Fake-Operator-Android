@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">FakeOperator</string>
+    <string name="pref_title_enable">Enable Fake Operator</string>
+    <string name="pref_description_enabled">Enable Fake Operator to spoof your carrier.</string>
+    <string name="pref_default_fake_operator">NSPwn</string>
+    <string name="pref_title_fake_operator">Fake Operator</string>
+</resources>

@@ -1,0 +1,33 @@
+# junk
+.DS_Store
+FakeOperator/libs/SystemUI.jar
+
+# built application files
+out/
+*.apk
+*.ap_
+.gradle
+*/*.iml
+# files for the dex VM
+*.dex
+
+# Java class files
+*.class
+*.jar
+
+# generated files
+bin/
+gen/
+FakeOperator/build
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Eclipse project files
+.classpath
+.project
+
+# Intellij project files
+.idea
+.iml
+*.iml
