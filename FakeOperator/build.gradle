@@ -13,10 +13,14 @@ repositories {
     mavenCentral()
 }
 
-dependencies {
-//    compile 'com.android.support:support-v4:13.0.+'
-    compile fileTree(dir: 'libs', includes: [ '*.jar' ])
+configurations {
+    provided
+}
 
+
+dependencies {
+    compile 'com.android.support:support-v4:13.0.+'
+    compile files('libs/substrate-api.jar')
 }
 
 
@@ -26,9 +30,19 @@ dependencies {
 //}
 
 // Does this work?
+//android.applicationVariants.each { variant ->
+//    variant.javaCompile.options.compilerArgs << '-javaagent:build-tools/aspectjweaver.jar'
+//    variant.javaCompile.options.compilerArgs << '-cp build-tools/substrate-bless.jar'
+//}
+
 android.applicationVariants.each { variant ->
     variant.javaCompile.options.compilerArgs << '-javaagent:build-tools/aspectjweaver.jar'
-    variant.javaCompile.options.compilerArgs << '-cp build-tools/substrate-bless.jar'
+    variant.javaCompile.classpath << 'build-tools/substrate-bless.jar'
+//    variant.javaCompile.classpath += 'libs/SystemUI.jar'
+//    logger.debug 'fffffffffff'
+//    logger.debug variant
+//    logger.debug variant.javaCompile.classpath
+//    logger.debug variant.javaCompile.options.compilerArgs
 }
 
 android {
