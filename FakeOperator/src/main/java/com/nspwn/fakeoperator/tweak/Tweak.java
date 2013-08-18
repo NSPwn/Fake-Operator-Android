@@ -1,16 +1,18 @@
-package com.nspwn.fakeoperator;
+package com.nspwn.fakeoperator.tweak;
 
+import android.content.SharedPreferences;
 import android.telephony.ServiceState;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
+import com.nspwn.fakeoperator.BuildConfig;
 import com.saurik.substrate.MS;
 
 import java.lang.reflect.Method;
 
 @SuppressWarnings("unused")
 public class Tweak {
-    private static final String TAG = "com.nspwn.fakeoperator.Tweak";
+    private static final String TAG = "com.nspwn.fakeoperator.tweak.Tweak";
 
     static void initialize() {
         Log.i(TAG, "tweak loaded");
@@ -34,13 +36,27 @@ public class Tweak {
                             public Void invoked(Object networkController, Object... args) throws Throwable {
                                 Log.d(TAG, "running updateNetworkName");
                                 boolean showSpn = (Boolean)args[0];
-                                String spn = "NSPwn (@GreySyntax)";//(String)args[1];
+                                String spn = (String)args[1];
                                 boolean showPlmn = (Boolean)args[2];
-                                String plmn = "PLMN";//(String)args[3];
+                                String plmn = (String)args[3];
+
+                                SharedPreferences preferences = Settings.getInstance().getPreferences();
+
+                                if (preferences != null) {
+                                    boolean enabled = preferences.getBoolean("tweak_enabled", false);
+                                    String fakeOperator = preferences.getString("fake_operator", "NSPwn");
+
+                                    Log.d(TAG, String.format("enabled=%b;fake_operator=%s;", enabled, fakeOperator));
+
+                                    if (enabled) {
+                                        spn = fakeOperator;
+                                    }
+                                }
 
                                 if (BuildConfig.DEBUG) {
                                     Log.d(TAG, String.format("updateNetworkName showSpn=%b  spn=%s showPlmn=%b plmn=%s", showSpn, spn, showPlmn, plmn));
                                 }
+
 
                                 return invoke(networkController,  showSpn, spn, showPlmn, plmn);
                             }
