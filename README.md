@@ -10,9 +10,14 @@ Build using gradle
 Features
 ===
 * Basic settings in Fake Operator application
-* Tweaks StatusBar's Operator/Carrier labels using hardcoded values
+* Tweaks StatusBar's Operator/Carrier labels
+* Settings used to customize notification bar
 
 Issues
 ===
-* Currently ignores settings
+* Currently ignores settings updates
+
+TODO
+===
+* Update notification bar on settings change
 
