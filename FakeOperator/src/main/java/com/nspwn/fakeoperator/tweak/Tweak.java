@@ -26,31 +26,29 @@ public class Tweak {
         hookGsmServiceStateTracker();
     }
 
-    public static void forceUpdateSpnDisplay() {
-        if (gsmServiceInstance == null)
-            return;
-
-        try {
-            Log.d(TAG, "forcing spn display to update");
-            Method updateSpnDisplay = gsmServiceInstance.getClass().getDeclaredMethod("updateSpnDisplay");
-            updateSpnDisplay.setAccessible(true);
-            updateSpnDisplay.invoke(gsmServiceInstance);
-        } catch (IllegalAccessException e) {
-            Log.d(TAG, "error illegal access...", e);
-        } catch (InvocationTargetException e) {
-            Log.d(TAG, "error invocation target...", e);
-        } catch (NoSuchMethodException e) {
-            Log.d(TAG, "error no such method...", e);
-        }
-    }
+//    public static void forceUpdateSpnDisplay() {
+//        if (gsmServiceInstance == null)
+//            return;
+//
+//        try {
+//            Log.d(TAG, "forcing spn display to update");
+//            Method updateSpnDisplay = gsmServiceInstance.getClass().getDeclaredMethod("updateSpnDisplay");
+//            updateSpnDisplay.setAccessible(true);
+//            updateSpnDisplay.invoke(gsmServiceInstance);
+//        } catch (IllegalAccessException e) {
+//            Log.d(TAG, "error illegal access...", e);
+//        } catch (InvocationTargetException e) {
+//            Log.d(TAG, "error invocation target...", e);
+//        } catch (NoSuchMethodException e) {
+//            Log.d(TAG, "error no such method...", e);
+//        }
+//    }
 
     private static Object getObjectFromField(Class<?> clazz, String name, Object instance) throws Throwable {
         Field field = clazz.getDeclaredField(name);
         field.setAccessible(true);
         return field.get(instance);
     }
-
-
 
     private static void hookGsmServiceStateTracker() {
         Log.d(TAG, "Attempting to hook GsmServiceStateTracker");
@@ -63,7 +61,7 @@ public class Tweak {
                     Method updateSpnDisplay = resources.getDeclaredMethod("updateSpnDisplay");
                     updateSpnDisplay.setAccessible(true);
 
-                    Class<?> internalRString = Class.forName("com.android.internal.R.string");
+                    Class<?> internalRString = Class.forName("com.android.internal.R$string");
                     int emergency_calls_only = 0;
                     int lockscreen_carrier_default = 0;
 

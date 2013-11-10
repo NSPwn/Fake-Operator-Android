@@ -28,9 +28,17 @@ android {
     compileSdkVersion 18
     buildToolsVersion "18.1.1"
 
-    buildTypes {
-
+    signingConfigs {
+        release {
+        }
     }
+
+    buildTypes {
+        release {
+//            signingConfig signingConfigs.release
+        }
+    }
+
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 16

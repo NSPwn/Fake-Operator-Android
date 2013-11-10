@@ -23,7 +23,7 @@ public class Settings {
 
     private Settings() {
         this.reloadPreferences();
-        this.watchPreferences();
+//        this.watchPreferences();
     }
 
     public void watchPreferences() {
@@ -33,6 +33,7 @@ public class Settings {
                 if ((FileObserver.CREATE & event) != 0 || (FileObserver.MODIFY & event) != 0) {
                     Log.d(TAG, "settings file changed triggering reload...");
                     Settings.getInstance().reloadPreferences();
+//                    Tweak.forceUpdateSpnDisplay();
                 }
             }
         };
@@ -52,14 +53,13 @@ public class Settings {
             Object prefs = constructor.newInstance(new File(file), Context.MODE_WORLD_READABLE);
 
             this.sharedPreferences = (SharedPreferences)prefs;
-
-            Tweak.forceUpdateSpnDisplay();
         } catch (Exception e) {
             Log.e(TAG, "error creating preferences...", e);
         }
     }
 
     public SharedPreferences getPreferences() {
+        this.reloadPreferences();
         return this.sharedPreferences;
     }
 }
