@@ -88,7 +88,7 @@ public class Tweak {
                                     String operatorNumeric = (String) getOperatorNumeric.invoke(mSS);
                                     rule = (Integer) getDisplayRule.invoke(mIccRecords, operatorNumeric);
                                 }
-//
+
                                 Method getVoiceRegState = mSS.getClass().getDeclaredMethod("getVoiceRegState");
                                 getVoiceRegState.setAccessible(true);
                                 int voiceRegState = (Integer) getVoiceRegState.invoke(mSS);
@@ -97,6 +97,7 @@ public class Tweak {
                                     boolean mEmergencyOnly = (Boolean) getObjectFromField(thiz.getClass(), "mEmergencyOnly", thiz);
                                     showPlmn = true;
 
+                                    //TODO fix getText calls
                                     if (mEmergencyOnly) {
                                         //noinspection ConstantConditions
                                         plmn = Resources.getSystem().getText(17040247).toString();
