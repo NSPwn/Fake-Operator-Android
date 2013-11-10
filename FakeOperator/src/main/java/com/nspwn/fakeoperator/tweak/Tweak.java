@@ -63,10 +63,21 @@ public class Tweak {
                     Method updateSpnDisplay = resources.getDeclaredMethod("updateSpnDisplay");
                     updateSpnDisplay.setAccessible(true);
 
+                    Class<?> internalRString = Class.forName("com.android.internal.R.string");
+                    int emergency_calls_only = 0;
+                    int lockscreen_carrier_default = 0;
+
+                    if (internalRString != null) {
+                        emergency_calls_only = (Integer) getObjectFromField(internalRString, "emergency_calls_only", null);
+                        lockscreen_carrier_default = (Integer) getObjectFromField(internalRString, "lockscreen_carrier_default", null);
+                    }
+
                     if (updateSpnDisplay != null) {
                         Log.d(TAG, "hooked updateSpnDisplay");
                         final Class<?> superClazz = resources.getSuperclass();
 
+                        final int finalLockscreen_carrier_default = lockscreen_carrier_default;
+                        final int finalEmergency_calls_only = emergency_calls_only;
                         MS.hookMethod(resources, updateSpnDisplay, new MS.MethodAlteration<Object, Void>() {
                             @Override
                             public Void invoked(Object thiz, Object... args) throws Throwable {
@@ -97,13 +108,10 @@ public class Tweak {
                                     boolean mEmergencyOnly = (Boolean) getObjectFromField(thiz.getClass(), "mEmergencyOnly", thiz);
                                     showPlmn = true;
 
-                                    //TODO fix getText calls
                                     if (mEmergencyOnly) {
-                                        //noinspection ConstantConditions
-                                        plmn = Resources.getSystem().getText(17040247).toString();
+                                        plmn = Resources.getSystem().getText(finalEmergency_calls_only).toString();
                                     } else {
-                                        //noinspection ConstantConditions
-                                        plmn = Resources.getSystem().getText(17040221).toString();
+                                        plmn = Resources.getSystem().getText(finalLockscreen_carrier_default).toString();
                                     }
 
                                     Log.d(TAG, "updateSpnDisplay: radio is on but out of service, set plmn='" + plmn + "'");
@@ -179,6 +187,10 @@ public class Tweak {
                     }
                 } catch (NoSuchMethodException me) {
                     Log.e(TAG, "error hooking method...", me);
+                } catch (ClassNotFoundException e) {
+                    Log.d(TAG, "error finding class...", e);
+                } catch (Throwable throwable) {
+                    Log.d(TAG, "error throwable...", throwable);
                 }
             }
         });
