@@ -12,12 +12,13 @@ import android.util.Log;
 import com.saurik.substrate.MS;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @SuppressWarnings("unused")
 public class Tweak {
     private static final String TAG = "com.nspwn.fakeoperator.tweak.Tweak";
-
+    private static Object gsmServiceInstance = null;
     static void initialize() {
         Log.i(TAG, "tweak loaded");
         Log.i(TAG, "waiting for class load(s)...");
@@ -25,11 +26,31 @@ public class Tweak {
         hookGsmServiceStateTracker();
     }
 
+    public static void forceUpdateSpnDisplay() {
+        if (gsmServiceInstance == null)
+            return;
+
+        try {
+            Log.d(TAG, "forcing spn display to update");
+            Method updateSpnDisplay = gsmServiceInstance.getClass().getDeclaredMethod("updateSpnDisplay");
+            updateSpnDisplay.setAccessible(true);
+            updateSpnDisplay.invoke(gsmServiceInstance);
+        } catch (IllegalAccessException e) {
+            Log.d(TAG, "error illegal access...", e);
+        } catch (InvocationTargetException e) {
+            Log.d(TAG, "error invocation target...", e);
+        } catch (NoSuchMethodException e) {
+            Log.d(TAG, "error no such method...", e);
+        }
+    }
+
     private static Object getObjectFromField(Class<?> clazz, String name, Object instance) throws Throwable {
         Field field = clazz.getDeclaredField(name);
         field.setAccessible(true);
         return field.get(instance);
     }
+
+
 
     private static void hookGsmServiceStateTracker() {
         Log.d(TAG, "Attempting to hook GsmServiceStateTracker");
@@ -50,6 +71,7 @@ public class Tweak {
                             @Override
                             public Void invoked(Object thiz, Object... args) throws Throwable {
                                 Log.d(TAG, "spn display hit");
+                                gsmServiceInstance = thiz;
 
                                 Object mSS = getObjectFromField(superClazz, "mSS", thiz);
                                 Object mIccRecords = getObjectFromField(superClazz, "mIccRecords", thiz);
@@ -57,9 +79,6 @@ public class Tweak {
                                 boolean showPlmn = false;
                                 int rule = 1;
                                 if (mIccRecords != null) {
-//                                    for (Method m : mIccRecords.getClass().getDeclaredMethods()) {
-//                                        Log.d(TAG, "method: " + m.getName() + " args: " + m.getParameterTypes());
-//                                    }
                                     Method getDisplayRule = mIccRecords.getClass().getDeclaredMethod("getDisplayRule", String.class);
                                     getDisplayRule.setAccessible(true);
 

@@ -31,6 +31,7 @@ public class Settings {
             @Override
             public void onEvent(int event, String path) {
                 if ((FileObserver.CREATE & event) != 0 || (FileObserver.MODIFY & event) != 0) {
+                    Log.d(TAG, "settings file changed triggering reload...");
                     Settings.getInstance().reloadPreferences();
                 }
             }
@@ -52,16 +53,13 @@ public class Settings {
 
             this.sharedPreferences = (SharedPreferences)prefs;
 
-            for (Map.Entry<String, ?> kvp : this.sharedPreferences.getAll().entrySet()) {
-                Log.i(TAG, String.format("key=%s;value=%s", kvp.getKey(), kvp.getValue().toString()));
-            }
+            Tweak.forceUpdateSpnDisplay();
         } catch (Exception e) {
             Log.e(TAG, "error creating preferences...", e);
         }
     }
 
     public SharedPreferences getPreferences() {
-        reloadPreferences();
         return this.sharedPreferences;
     }
 }
