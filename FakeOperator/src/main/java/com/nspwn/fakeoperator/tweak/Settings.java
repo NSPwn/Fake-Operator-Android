@@ -3,6 +3,7 @@ package com.nspwn.fakeoperator.tweak;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.FileObserver;
 import android.util.Log;
 
 import java.io.File;
@@ -22,21 +23,21 @@ public class Settings {
 
     private Settings() {
         this.reloadPreferences();
-//        this.watchPreferences();
+        this.watchPreferences();
     }
 
-//    public void watchPreferences() {
-//        FileObserver fileObserver = new FileObserver(DATA_PATH) {
-//            @Override
-//            public void onEvent(int event, String path) {
-//                if ((FileObserver.CREATE & event) != 0 || (FileObserver.MODIFY & event) != 0) {
-//                    Settings.getInstance().reloadPreferences();
-//                }
-//            }
-//        };
-//
-//        fileObserver.startWatching();
-//    }
+    public void watchPreferences() {
+        FileObserver fileObserver = new FileObserver(DATA_PATH) {
+            @Override
+            public void onEvent(int event, String path) {
+                if ((FileObserver.CREATE & event) != 0 || (FileObserver.MODIFY & event) != 0) {
+                    Settings.getInstance().reloadPreferences();
+                }
+            }
+        };
+
+        fileObserver.startWatching();
+    }
 
     public void reloadPreferences() {
         try {
