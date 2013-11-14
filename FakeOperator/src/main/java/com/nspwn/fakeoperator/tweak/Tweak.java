@@ -153,6 +153,10 @@ public class Tweak {
                         final Field serviceState = findField(superClazz, "mSS", "ss");
                         final Field iccRecords = findField(superClazz, "mIccRecords");
                         final Field emergencyOnly = findField(resources, "mEmergencyOnly");
+                        final Field curShowSpn = findField(resources, "mCurShowSpn");
+                        final Field curShowPlmn = findField(resources, "mCurShowPlmn");
+                        final Field curSpn = findField(resources, "mCurSpn");
+                        final Field curPlmn = findField(resources, "mCurPlmn");
 
                         MS.hookMethod(resources, updateSpnDisplay, new MS.MethodAlteration<Object, Void>() {
                             @Override
@@ -223,16 +227,10 @@ public class Tweak {
                                         boolean showSpn = !TextUtils.isEmpty(spn)
                                                 && ((rule & SPN_RULE_SHOW_SPN) == SPN_RULE_SHOW_SPN);
 
-
-                                        Field mCurShowSpn = findField(gsmServiceStateTracker.getClass(), "mCurShowSpn");
-                                        Field mCurShowPlmn = findField(gsmServiceStateTracker.getClass(), "mCurShowPlmn");
-                                        Field mCurSpn = findField(gsmServiceStateTracker.getClass(), "mCurSpn");
-                                        Field mCurPlmn = findField(gsmServiceStateTracker.getClass(), "mCurPlmn");
-
-                                        if (showPlmn != mCurShowPlmn.getBoolean(gsmServiceStateTracker)
-                                                || showSpn != mCurShowSpn.getBoolean(gsmServiceStateTracker)
-                                                || !TextUtils.equals(spn, (String) mCurSpn.get(gsmServiceStateTracker))
-                                                || !TextUtils.equals(plmn, (String) mCurPlmn.get(gsmServiceStateTracker))) {
+                                        if (showPlmn != curShowPlmn.getBoolean(gsmServiceStateTracker)
+                                                || showSpn != curShowSpn.getBoolean(gsmServiceStateTracker)
+                                                || !TextUtils.equals(spn, (String) curSpn.get(gsmServiceStateTracker))
+                                                || !TextUtils.equals(plmn, (String) curPlmn.get(gsmServiceStateTracker))) {
                                             Log.d(TAG, String.format("GSM updateSpnDisplay: changed sending intent rule="
                                                     + rule + " showPlmn='%b' plmn='%s' showSpn='%b' spn='%s'",
                                                     showPlmn, plmn, showSpn, spn));
@@ -240,10 +238,10 @@ public class Tweak {
                                             broadcastSpnUpdate(gsmServiceStateTracker, plmn, showPlmn, spn, showSpn);
                                         }
 
-                                        mCurShowPlmn.setBoolean(gsmServiceStateTracker, showPlmn);
-                                        mCurShowSpn.setBoolean(gsmServiceStateTracker, showSpn);
-                                        mCurSpn.set(gsmServiceStateTracker, spn);
-                                        mCurPlmn.set(gsmServiceStateTracker, plmn);
+                                        curShowPlmn.setBoolean(gsmServiceStateTracker, showPlmn);
+                                        curShowSpn.setBoolean(gsmServiceStateTracker, showSpn);
+                                        curSpn.set(gsmServiceStateTracker, spn);
+                                        curPlmn.set(gsmServiceStateTracker, plmn);
                                     }
                                 }
                                 return null;
@@ -276,6 +274,8 @@ public class Tweak {
                         Log.d(TAG, "hooked updateSpnDisplay");
                         final Class<?> superClazz = resources.getSuperclass();
                         final Field serviceState = findField(superClazz, "mSS", "ss");
+                        final Field curPlmn = findField(resources, "mCurPlmn", "curPlmn");
+
                         MS.hookMethod(resources, updateSpnDisplay, new MS.MethodAlteration<Object, Void>() {
                             @Override
                             public Void invoked(Object cdmaServiceStateTracker, Object... args) throws Throwable {
@@ -297,7 +297,7 @@ public class Tweak {
                                         plmn = (String) getOperatorAlphaLong.invoke(mSS);
                                         boolean showPlmn = plmn != null;
 
-                                        Field mCurPlmn = findField(cdmaServiceStateTracker.getClass(), "mCurPlmn", "curPlmn");
+
                                         SharedPreferences preferences = Settings.getInstance().getPreferences();
                                         boolean enabled = preferences.getBoolean("tweak_enabled", false);
                                         String fakeOperator = preferences.getString("fake_operator", "NSPwn");
@@ -306,12 +306,12 @@ public class Tweak {
                                             plmn = fakeOperator;
                                         }
 
-                                        if (!TextUtils.equals(plmn, (String) mCurPlmn.get(cdmaServiceStateTracker))) {
+                                        if (!TextUtils.equals(plmn, (String) curPlmn.get(cdmaServiceStateTracker))) {
                                             Log.d(TAG, String.format("CDMA updateSpnDisplay: changed sending intent showPlmn='%b' plmn='%s'", showPlmn, plmn));
                                             broadcastSpnUpdate(cdmaServiceStateTracker, plmn, showPlmn, "", false);
                                         }
 
-                                        mCurPlmn.set(cdmaServiceStateTracker, plmn);
+                                        curPlmn.set(cdmaServiceStateTracker, plmn);
                                     }
                                 }
 
