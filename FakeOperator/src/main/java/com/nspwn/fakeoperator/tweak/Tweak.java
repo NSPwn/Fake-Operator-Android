@@ -14,7 +14,7 @@ import com.saurik.substrate.MS;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import static android.content.res.Resources.*;
+import static android.content.res.Resources.getSystem;
 
 @SuppressWarnings("unused")
 public class Tweak {
