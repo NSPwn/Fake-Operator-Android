@@ -10,12 +10,12 @@ Build using gradle
 Features
 ===
 * Basic settings in Fake Operator application
-* Tweaks StatusBar's Operator/Carrier labels
+* Tweaks the telephony ServiceCenter to modify the updateSpnDisplay method
 * Settings used to customize notification bar
 
 Issues
 ===
-* Currently ignores settings updates
+* Currently ignores settings updates until the spn is updated interally
 
 TODO
 ===
