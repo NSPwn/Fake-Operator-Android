@@ -164,13 +164,15 @@ public class Tweak {
                         Log.d(TAG, "hooked updateSpnDisplay");
                         final Class<?> superClazz = resources.getSuperclass();
                         final Field serviceState = findField(superClazz, "mSS", "ss");
-                        final Field iccRecords = findField(superClazz, "mIccRecords");
+                        final Field iccRecords = findField(superClazz, false, "mIccRecords");
                         final Field emergencyOnly = findField(resources, "mEmergencyOnly");
                         final Field curShowSpn = findField(resources, "mCurShowSpn");
                         final Field curShowPlmn = findField(resources, "mCurShowPlmn");
-                        final Field curSpn = findField(resources, "mCurSpn");
-                        final Field curPlmn = findField(resources, "mCurPlmn");
-
+                        final Field curSpn = findField(resources, "mCurSpn", "curSpn");
+                        final Field curPlmn = findField(resources, "mCurPlmn", "curPlmn");
+                        final Field commandsInterface = useOldHooks ? findField(superClazz, "cm") : null;
+                        final Field localPhone = useOldHooks ? findField(superClazz, "phone") : null;
+                        final Field curSpnRule = useOldHooks ? findField(resources, "curSpnRule") : null;
                         MS.hookMethod(resources, updateSpnDisplay, new MS.MethodAlteration<Object, Void>() {
                             @Override
                             public Void invoked(Object gsmServiceStateTracker, Object... args) throws Throwable {
@@ -182,6 +184,58 @@ public class Tweak {
                                     if (useOldHooks) {
                                         Log.d(TAG, "Using old hook API <18");
                                         //TODO old hook
+                                        Field mIccRecords = findField(localPhone.getClass().getSuperclass(), "mIccRecords");
+                                        Object iccRecords = mIccRecords.get(localPhone);
+                                        Object mSS = serviceState.get(gsmServiceStateTracker);
+
+                                        int rule = 0;
+
+                                        Method getOperatorAlphaLong = findMethod(mSS.getClass(), "getOperatorAlphaLong");
+                                        Method getServiceProviderName = findMethod(mIccRecords.getClass(), "getServiceProviderName");
+
+                                        String spn = (String)getServiceProviderName.invoke(iccRecords);
+                                        String plmn = (String)getOperatorAlphaLong.invoke(mSS);
+
+                                        if (mIccRecords != null) {
+                                            Method getDisplayRule = findMethod(mIccRecords.getClass(), "getDisplayRule");
+                                            Method getOperatorNumeric = findMethod(mSS.getClass(), "getOperatorNumeric");
+
+                                            String operatorNumeric = (String) getOperatorNumeric.invoke(mSS);
+                                            rule = (Integer) getDisplayRule.invoke(mIccRecords, operatorNumeric);
+                                        }
+
+                                        Object cm = commandsInterface.get(gsmServiceStateTracker);
+                                        Method getRadioState = findMethod(cm.getClass(), "getRadioState");
+                                        Object radioState = getRadioState.invoke(cm);
+                                        Method radioState$isOn = findMethod(radioState.getClass(), "isOn");
+                                        boolean isOn = (Boolean) radioState$isOn.invoke(radioState);
+                                        boolean mEmergencyOnly = emergencyOnly.getBoolean(gsmServiceStateTracker);
+
+                                        if (mEmergencyOnly && isOn) {
+                                            plmn = emergencyCallsOnly;
+                                            Log.d(TAG, "updateSpnDisplay: emergency only and radio is on plmn='" + plmn + "'");
+                                        }
+
+                                        int mCurSpnRule = curSpnRule.getInt(gsmServiceStateTracker);
+
+                                        if (rule != mCurSpnRule
+                                            || !TextUtils.equals(spn, (String) curSpn.get(gsmServiceStateTracker))
+                                            || !TextUtils.equals(plmn, (String) curPlmn.get(gsmServiceStateTracker))) {
+                                            boolean showSpn = !mEmergencyOnly && !TextUtils.isEmpty(spn)
+                                                    && (rule & SPN_RULE_SHOW_SPN) == SPN_RULE_SHOW_SPN;
+                                            boolean showPlmn = !TextUtils.isEmpty(plmn)
+                                                    && (rule & SPN_RULE_SHOW_PLMN) == SPN_RULE_SHOW_PLMN;
+
+                                            Log.d(TAG, String.format("GSM updateSpnDisplay: changed sending intent rule="
+                                                    + rule + " showPlmn='%b' plmn='%s' showSpn='%b' spn='%s'",
+                                                    showPlmn, plmn, showSpn, spn));
+
+                                            broadcastSpnUpdate(gsmServiceStateTracker, plmn, showPlmn, spn, showSpn);
+                                        }
+
+                                        curSpnRule.setInt(gsmServiceStateTracker, rule);
+                                        curSpn.set(gsmServiceStateTracker, spn);
+                                        curPlmn.set(gsmServiceStateTracker, plmn);
                                     } else {
                                         Log.d(TAG, "Using new hook API >18");
                                         gsmServiceInstance = gsmServiceStateTracker;
@@ -298,34 +352,28 @@ public class Tweak {
                                     Log.d(TAG, "tweak force disabled, running stock method");
                                     return invoke(cdmaServiceStateTracker, args);
                                 } else {
-                                    if (useOldHooks) {
-                                        Log.d(TAG, "Using old hook API <18");
-                                        //TODO old hook
-                                    } else {
-                                        Log.d(TAG, "Using new hook API >18");
-                                        String plmn;
-                                        Object mSS = serviceState.get(cdmaServiceStateTracker);
-                                        Method getOperatorAlphaLong = findMethod(mSS.getClass(), "getOperatorAlphaLong");
+                                    String plmn;
+                                    Object mSS = serviceState.get(cdmaServiceStateTracker);
+                                    Method getOperatorAlphaLong = findMethod(mSS.getClass(), "getOperatorAlphaLong");
 
-                                        plmn = (String) getOperatorAlphaLong.invoke(mSS);
-                                        boolean showPlmn = plmn != null;
+                                    plmn = (String) getOperatorAlphaLong.invoke(mSS);
+                                    boolean showPlmn = plmn != null;
 
 
-                                        SharedPreferences preferences = Settings.getInstance().getPreferences();
-                                        boolean enabled = preferences.getBoolean("tweak_enabled", false);
-                                        String fakeOperator = preferences.getString("fake_operator", "NSPwn");
+                                    SharedPreferences preferences = Settings.getInstance().getPreferences();
+                                    boolean enabled = preferences.getBoolean("tweak_enabled", false);
+                                    String fakeOperator = preferences.getString("fake_operator", "NSPwn");
 
-                                        if (enabled) {
-                                            plmn = fakeOperator;
-                                        }
-
-                                        if (!TextUtils.equals(plmn, (String) curPlmn.get(cdmaServiceStateTracker))) {
-                                            Log.d(TAG, String.format("CDMA updateSpnDisplay: changed sending intent showPlmn='%b' plmn='%s'", showPlmn, plmn));
-                                            broadcastSpnUpdate(cdmaServiceStateTracker, plmn, showPlmn, "", false);
-                                        }
-
-                                        curPlmn.set(cdmaServiceStateTracker, plmn);
+                                    if (enabled) {
+                                        plmn = fakeOperator;
                                     }
+
+                                    if (!TextUtils.equals(plmn, (String) curPlmn.get(cdmaServiceStateTracker))) {
+                                        Log.d(TAG, String.format("CDMA updateSpnDisplay: changed sending intent showPlmn='%b' plmn='%s'", showPlmn, plmn));
+                                        broadcastSpnUpdate(cdmaServiceStateTracker, plmn, showPlmn, "", false);
+                                    }
+
+                                    curPlmn.set(cdmaServiceStateTracker, plmn);
                                 }
 
                                 return null;
