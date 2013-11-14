@@ -26,6 +26,8 @@ public class Tweak {
     private static String lockscreenCarrierDefault = null;
     private static boolean errorForceDisable = false;
     private static boolean useOldHooks = false;
+    private static UserHandle userHandle;
+    private static Method sendStickyBroadcastAsUser;
 
     static void initialize() {
         Log.i(TAG, "tweak loaded");
@@ -35,7 +37,7 @@ public class Tweak {
             useOldHooks = true;
         }
 
-        cacheInternalStrings();
+        cacheInternal();
         hookServiceStateTracker();
     }
 
@@ -107,7 +109,7 @@ public class Tweak {
         return null;
     }
 
-    private static void cacheInternalStrings() {
+    private static void cacheInternal() {
         try {
             Log.d(TAG, "Trying to hook com.android.internal.R$string");
             Class<?> internalRString;
@@ -123,6 +125,17 @@ public class Tweak {
 
             Log.d(TAG, "hooked com.android.internal.R$string");
             Log.d(TAG, "Hooked strings lockscreen_carrier_default='" + lockscreenCarrierDefault + "' + emergency_calls_only='" + emergencyCallsOnly + "'");
+
+            if (!useOldHooks) {
+                Log.d(TAG, "Trying to hook the ALL user handle");
+                userHandle =  (UserHandle) findField(UserHandle.class, "ALL").get(null);
+                Log.d(TAG, "Hooked the ALL user handle");
+
+                Log.d(TAG, "Trying to hook sendStickyBroadcastAsUser");
+                sendStickyBroadcastAsUser = Context.class.getDeclaredMethod("sendStickyBroadcastAsUser", Intent.class, UserHandle.class);
+                sendStickyBroadcastAsUser.setAccessible(true);
+                Log.d(TAG, "Hooked sendStickyBroadcastAsUser");
+            }
         } catch (ClassNotFoundException e) {
             Log.d(TAG, "error class not found...", e);
         } catch (Throwable throwable) {
@@ -341,15 +354,9 @@ public class Tweak {
         Object mPhone = findField(serviceStateTracker.getClass(), "mPhone", "phone").get(serviceStateTracker);
         Context phoneContext = (Context) findField(mPhone.getClass().getSuperclass(), "mContext", "context").get(mPhone);
 
-        // TODO cache object result
-        UserHandle userHandle = (UserHandle) findField(UserHandle.class, "ALL").get(null);
-
         if (useOldHooks) {
             phoneContext.sendStickyBroadcast(intent);
         } else {
-            //TODO cache method
-            Method sendStickyBroadcastAsUser = phoneContext.getClass().getDeclaredMethod("sendStickyBroadcastAsUser", Intent.class, UserHandle.class);
-            sendStickyBroadcastAsUser.setAccessible(true);
             sendStickyBroadcastAsUser.invoke(phoneContext, intent, userHandle);
         }
     }
